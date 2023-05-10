@@ -16,4 +16,3 @@
 #include<stdlib.h>
 #include<clock.h>
 
-//testando commit
