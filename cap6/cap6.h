@@ -11,8 +11,8 @@
 #define SOCKET int
 #define GETSOCKETERRNO() (errno)
 
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
-#include<clock.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
 

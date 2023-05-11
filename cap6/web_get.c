@@ -29,12 +29,96 @@ int main(int argc, char *argv[]){
         int encoding = 0;
         int remaining = 0;
         
+        while(1){
 
+            if ((clock()- start_time)/CLOCKS_PER_SEC>TIMEOUT){
+                fprintf(stderr, "timeout after %.2f seconds\n",  TIMEOUT);
+                return 1;
+            }
 
+            if (p==end){
+                fprintf(stderr, "out of buffer space\n");
+                return 1;
+            }
 
+            fd_set reads;
+            FD_ZERO(&reads);
+            FD_SET(server, &reads);
 
+            struct timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 200000;
+            if(select(server+1, &reads, 0, 0, &timeout)<0){
+                fprintf(stderr, "select() falhou. (%d)\n", GETSOCKETERRNO());
+                return 1;
+            }
+            
+            if(FD_ISSET(server, &reads)){
+                int bytes_received = recv(server, p, end - p, 0);
+                if(bytes_received<1){
+                    if(encoding == connection && body){
+                        printf("%.*s", (int) (end-body), body);
+                    }
+                    printf("\nConexão fechada pelo peer...\n");
+                    break;
+                }
+                p+=bytes_received;
+                *p=0;
+                
+                if(!body && (body== strstr(response, "\r\n\r\n"))){
+                    *body = 0;
+                    body +=4;
+                    printf("Received Headers:\n%s\n", response);
+                    q = strstr(response, "\nContent-Length: ");
+                    if(q){
+                        encoding = length;
+                        q = strchr(q, ' ');
+                        q+=1;
+                        remaining = strtol(q, 0, 10);
+                    }else{
+                        q = strstr(response, "\nTransfer-Encoding: chunked");
+                        if(q){
+                            encoding = chunked;
+                            remaining=0;
+                        }else{
+                            encoding = connection;
+                        }
+                    }
+                    printf("\nReceived Body:\n");
+                }
 
-
+                if(body){
+                    if(encoding==length){
+                        if(p-body>=remaining){
+                            printf("%.*s", remaining, body);
+                            break;
+                        }
+                    }else if(encoding == chunked){
+                        do{
+                            if(remaining == 0){
+                                if((q=strstr(body, "\r\n"))){
+                                    remaining = strtol(body, 0, 16);
+                                    if(!remaining) goto finish;
+                                    body = q+2;
+                                }else {
+                                    break;
+                                }
+                            }
+                            if (remaining && p-body>=remaining){
+                                printf("%.*s", remaining, body);
+                                body+= remaining+2;
+                                remaining=0;
+                            }
+                        
+                        }while(!remaining);
+                    }
+                }
+            }
+        }
+        finish:
+            printf("Fechando o socket...\n");
+            CLOSESOCKET(server);
+            printf("Encerrado...\n");
 }
 
 void parse_url(char *url, char **hostname, char **port, char **path){
@@ -48,7 +132,7 @@ void parse_url(char *url, char **hostname, char **port, char **path){
         *p = 0;
         p += 3;
     }else {
-        P = url;
+        p = url;
     }
     if(protocol){
         if(strcmp(protocol, "http")){
@@ -59,6 +143,13 @@ void parse_url(char *url, char **hostname, char **port, char **path){
 
     *hostname = p;
     while(*p && *p != ':' && *p!='/' && *p!='#') ++p;
+    *port = "80";
+    if(*p == ':'){
+        *p++=0;
+        *port = p;
+    }
+    while(*p && *p!='/' && *p!='#') ++p;
+
     *path=p;
     if(*p == '/'){
         *path = p+1;
@@ -96,10 +187,10 @@ SOCKET connect_to_host(char *hostname, char *port){
         exit(1);
     }
     printf("Endereço remoto é: ");
-    char adress_buffer[100];
+    char address_buffer[100];
     char service_buffer[100];
 
-    getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen, adress_buffer, sizeof(adress_buffer), service_buffer, sizeof(service_buffer), NI_NUMERICHOST);
+    getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen, address_buffer, sizeof(address_buffer), service_buffer, sizeof(service_buffer), NI_NUMERICHOST);
     printf("%s %s\n", address_buffer, service_buffer);
 
     printf("Criando o socket...\n");

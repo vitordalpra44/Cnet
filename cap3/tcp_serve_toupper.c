@@ -67,19 +67,30 @@ while(1){
                 char address_buffer[100];
                 getnameinfo((struct sockaddr*) &client_address, client_len, address_buffer, sizeof(address_buffer), 0, 0, NI_NUMERICHOST);
                 printf("Nova conexão de %s\n", address_buffer);
+
+            
             }else{
-                char read[1024];
-                int bytes_received= recv(i, read, 1024, 0);
-                if(bytes_received<1){
+                char nome[100], nota[100];
+                int bytes_nome =0, bytes_nota= 0;
+                
+                bytes_nome= recv(i, nome, 100, 0);
+                bytes_nota = recv(i, nota, 100, 0);
+                if(bytes_nome<1 || bytes_nota<1){
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
                     continue;
                 }
-
-                int j;
-                for(j=0; j<bytes_received;++j)
-                    read[j] = toupper(read[j]);
-                send(i, read, bytes_received, 0);
+                if(strcmp(nome, "NOME") && strcmp(nota, "NOTA")){
+                FILE *arquivo;
+                arquivo = fopen("Notas.txt", "a");
+                if(arquivo == NULL) {
+                    printf("Erro ao abrir o arquivo!\n");
+                    return 1;
+                }
+                fprintf(arquivo, "\nNome: %s\nNota: %s\n ", nome, nota);
+                fclose(arquivo);
+                send(i, "\nNota salva com sucesso...\n", 33, 0);
+                }else send(i, "\nErro ao pegar dados...\n", 24, 0);
             }
 
         }

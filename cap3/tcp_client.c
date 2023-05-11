@@ -42,8 +42,8 @@ int main(int argc, char *argv[]){
     }
     freeaddrinfo(peer_address);
 
-    printf("Conectado :D\n");
-    printf("Digite e pressione enter.\n");
+    printf("Conectado...\n");
+
 
     while(1){
         fd_set reads;
@@ -53,7 +53,6 @@ int main(int argc, char *argv[]){
         struct timeval timeout;
         timeout.tv_sec = 0;
         timeout.tv_usec = 100000;
-
         if(select(socket_peer+1, &reads, 0, 0, &timeout)<0){
             fprintf(stderr, "select() falhou. (%d)", GETSOCKETERRNO());
             return 1;
@@ -62,20 +61,25 @@ int main(int argc, char *argv[]){
         if(FD_ISSET(socket_peer, &reads)){
             char read[4096];
             int bytes_received = recv(socket_peer, read, 4096, 0);
+        
             if (bytes_received<1){
                 printf("Conexão interrompida pelo peer\n");
                 break;
             }
-            printf("%d bytes recebidos: %.*s", bytes_received, bytes_received, read);
+            printf("\n%.*s\n",bytes_received, read);
 
         }
 
         if(FD_ISSET(0, &reads)){
             char read[4096];
+            printf("\nNome: ");
             if(!fgets(read, 4096, stdin)) break;
-            printf("Enviando: %s\n", read);
-            int bytes_sent = send(socket_peer, read, strlen(read), 0);
-            printf("%d bytes enviados\n", bytes_sent);
+            int bytes_sent = send(socket_peer, strcat("NOME",read), strlen(read)+4, 0);
+            if(bytes_sent){
+                printf("\nNota: ");
+                if(!fgets(read, 4096, stdin)) break;
+                bytes_sent = send(socket_peer, strcat("NOTA",read), strlen(read)+4, 0);
+            }
         }
     }
 
