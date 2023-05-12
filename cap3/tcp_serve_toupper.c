@@ -77,6 +77,7 @@ while(1){
                     CLOSESOCKET(i);
                     continue;
                 }
+                if(read[0] != 0){
                 int j = 0;
                 while(read[j] && read[j]!='*'){
                     j++;
@@ -99,6 +100,7 @@ while(1){
                 fprintf(arquivo, "\nNome: %s \nNota: %s \n ", nome, nota);
                 fclose(arquivo);
                 send(i, "\nNota salva com sucesso...\n", 33, 0);
+                }
                 }
             }
 
