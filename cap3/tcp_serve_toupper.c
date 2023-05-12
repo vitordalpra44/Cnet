@@ -85,7 +85,7 @@ while(1){
                     nome[x]= read[x];
                 }
                 int y =0;
-                for(x=j+1;read[x]!='#';x++){
+                for(int x=j+1;read[x]!='#' && read[x];x++){
                     nota[y] = read[x];
                     y++; 
                 }
@@ -96,10 +96,11 @@ while(1){
                     printf("Erro ao abrir o arquivo!\n");
                     return 1;
                 } // 
-                fprintf(arquivo, "\nNome: %s\nNota: %s\n ", nome, nota);
+                fprintf(arquivo, "\nNome: %s \nNota: %s \n ", nome, nota);
                 fclose(arquivo);
                 send(i, "\nNota salva com sucesso...\n", 33, 0);
                 }
+            }
 
         }
 
@@ -116,4 +117,5 @@ printf("Encerrado...\n");
 
 
     return 0;
+
 }

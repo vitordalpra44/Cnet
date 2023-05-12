@@ -1,16 +1,6 @@
 
-Nome: Vitor
-
-Nota: Teste de nota
-
- 
 Nome: 
-
-Nota: dedhje
-.1
- 
-Nome: oi
-
-Nota: Vitor oi
-
+testabdo nota
+#€.Ã·ç 
+Nota:  
  
