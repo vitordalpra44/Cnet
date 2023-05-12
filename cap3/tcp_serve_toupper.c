@@ -86,7 +86,7 @@ while(1){
                 if(arquivo == NULL) {
                     printf("Erro ao abrir o arquivo!\n");
                     return 1;
-                }
+                } // 
                 fprintf(arquivo, "\nNome: %s\nNota: %s\n ", nome, nota);
                 fclose(arquivo);
                 send(i, "\nNota salva com sucesso...\n", 33, 0);
