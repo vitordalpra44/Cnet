@@ -44,7 +44,6 @@ int main(int argc, char *argv[]){
 
     printf("Conectado...\n");
 
-
     while(1){
         fd_set reads;
         FD_ZERO(&reads);
@@ -67,13 +66,13 @@ int main(int argc, char *argv[]){
                 break;
             }
             printf("\n%.*s\n",bytes_received, read);
-
-        }
-
+        } 
         if(FD_ISSET(0, &reads)){
-            char read[4096];
+            char read[4096]={"NOME"}, *p = read+4;
             printf("\nNome: ");
-            if(!fgets(read, 4096, stdin)) break;
+            if(!fgets(p, 4092, stdin)) break;
+            p = strcpm(read, NULL);
+
             int bytes_sent = send(socket_peer, strcat("NOME",read), strlen(read)+4, 0);
             if(bytes_sent){
                 printf("\nNota: ");

@@ -70,12 +70,10 @@ while(1){
 
             
             }else{
-                char nome[100], nota[100];
-                int bytes_nome =0, bytes_nota= 0;
-                
-                bytes_nome= recv(i, nome, 100, 0);
-                bytes_nota = recv(i, nota, 100, 0);
-                if(bytes_nome<1 || bytes_nota<1){
+                char read[1024];
+                int bytes_received = recv(i, read, 1024, 0);
+  
+                if(bytes_received<1){
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
                     continue;
