@@ -71,15 +71,22 @@ int main(int argc, char *argv[]){
         }
 
         if(FD_ISSET(0, &reads)){
-            char read[4096];
+            char read[4096], *p;
             printf("\nNome: ");
             if(!fgets(read, 4096, stdin)) break;
-            int bytes_sent = send(socket_peer, strcat("NOME",read), strlen(read)+4, 0);
-            if(bytes_sent){
-                printf("\nNota: ");
-                if(!fgets(read, 4096, stdin)) break;
-                bytes_sent = send(socket_peer, strcat("NOTA",read), strlen(read)+4, 0);
+            int i=0;
+            while(read[i]){
+                i++;
             }
+            read[i]='*';
+            printf("\nNota: ");
+            if(!fgets(read+i+1, 4096, stdin)) break;
+            while(read[i]){
+                i++;
+            }
+            read[i]='#';
+            
+            int bytes_sent = send(socket_peer, read, strlen(read), 0);
         }
     }
 

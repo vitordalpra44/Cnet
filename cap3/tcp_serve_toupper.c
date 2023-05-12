@@ -70,17 +70,26 @@ while(1){
 
             
             }else{
-                char nome[100], nota[100];
-                int bytes_nome =0, bytes_nota= 0;
-                
-                bytes_nome= recv(i, nome, 100, 0);
-                bytes_nota = recv(i, nota, 100, 0);
-                if(bytes_nome<1 || bytes_nota<1){
+                char read[1024], nome[100], nota[200];
+                int bytes_received= recv(i, read, 1024, 0);
+                if(bytes_received<1){
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
                     continue;
                 }
-                if(strcmp(nome, "NOME") && strcmp(nota, "NOTA")){
+                int j = 0;
+                while(read[j] && read[j]!='*'){
+                    j++;
+                }
+                for(int x=0;x<j;x++){
+                    nome[x]= read[x];
+                }
+                int y =0;
+                for(x=j+1;read[x]!='#';x++){
+                    nota[y] = read[x];
+                    y++; 
+                }
+                if(nome && nota){
                 FILE *arquivo;
                 arquivo = fopen("Notas.txt", "a");
                 if(arquivo == NULL) {
@@ -90,8 +99,7 @@ while(1){
                 fprintf(arquivo, "\nNome: %s\nNota: %s\n ", nome, nota);
                 fclose(arquivo);
                 send(i, "\nNota salva com sucesso...\n", 33, 0);
-                }else send(i, "\nErro ao pegar dados...\n", 24, 0);
-            }
+                }
 
         }
 
