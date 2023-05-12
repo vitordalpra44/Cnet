@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
     freeaddrinfo(peer_address);
-    printf("Conectado...");
+    printf("Conectado...pressione enter");
     
     
 
