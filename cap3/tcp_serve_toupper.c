@@ -70,38 +70,14 @@ while(1){
 
             
             }else{
-                char read[1024], nome[100], nota[200];
-                int bytes_received= recv(i, read, 1024, 0);
-                if(bytes_received<1){
+                char read[1024];       
+                bytes_received= recv(i, read, 1024, 0);
+                if(bytes_rewceived<1){
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
                     continue;
                 }
-                if(read[0] != 0){
-                int j = 0;
-                while(read[j] && read[j]!='*'){
-                    j++;
-                }
-                for(int x=0;x<j;x++){
-                    nome[x]= read[x];
-                }
-                int y =0;
-                for(int x=j+1;read[x]!='#' && read[x];x++){
-                    nota[y] = read[x];
-                    y++; 
-                }
-                if(nome && nota){
-                FILE *arquivo;
-                arquivo = fopen("Notas.txt", "a");
-                if(arquivo == NULL) {
-                    printf("Erro ao abrir o arquivo!\n");
-                    return 1;
-                } // 
-                fprintf(arquivo, "\nNome: %s \nNota: %s \n ", nome, nota);
-                fclose(arquivo);
-                send(i, "\nNota salva com sucesso...\n", 33, 0);
-                }
-                }
+                send(i, read, bytes_received,0);
             }
 
         }
@@ -119,5 +95,4 @@ printf("Encerrado...\n");
 
 
     return 0;
-
 }

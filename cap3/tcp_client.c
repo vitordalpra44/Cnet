@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
     freeaddrinfo(peer_address);
-    printf("Conectado...pressione enter");
+    printf("Conectado...");
     
     
 
@@ -75,20 +75,6 @@ int main(int argc, char *argv[]){
             char read[4096], *p;
             printf("\nNome: ");
             if(!fgets(read, 4096, stdin)) break;
-            if(read){
-            int i=0;
-            while(read[i]){
-                i++;
-            }
-            read[i]='*';
-            printf("\nNota: ");
-            if(!fgets(read+i, 4096, stdin)) break;
-            while(read[i]){
-                i++;
-            }
-            read[i]='#';
-            read[1024]='&';
-            }
             int bytes_sent = send(socket_peer, read, strlen(read), 0);
         }
     }
