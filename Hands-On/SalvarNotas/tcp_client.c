@@ -1,4 +1,4 @@
-#include "cap3.h"
+#include "SalvarNotasH.h"
 
 int main(int argc, char *argv[]){
 
@@ -11,6 +11,8 @@ int main(int argc, char *argv[]){
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
+
+
     struct addrinfo *peer_address;
     if(getaddrinfo(argv[1], argv[2], &hints, &peer_address)){
         fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
@@ -40,8 +42,9 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Conexão falhou. (%d)", GETSOCKETERRNO());
         return 1;
     }
+    printf("\nConectado...Digite uma nota: ");
     freeaddrinfo(peer_address);
-    printf("Conectado...");
+
     
     
 
@@ -60,20 +63,19 @@ int main(int argc, char *argv[]){
         }
 
         if(FD_ISSET(socket_peer, &reads)){
-            char read[4096];
-            int bytes_received = recv(socket_peer, read, 4096, 0);
+            char read2[4096];
+            int bytes_received = recv(socket_peer, read2, 4096, 0);
         
             if (bytes_received<1){
                 printf("Conexão interrompida pelo peer\n");
                 break;
             }
-            printf("\n%.*s\n",bytes_received, read);
+            printf("\n%.*s\n",bytes_received, read2);
 
         }
 
         if(FD_ISSET(0, &reads)){
-            char read[4096], *p;
-            printf("\nNome: ");
+            unsigned char read[4096];
             if(!fgets(read, 4096, stdin)) break;
             int bytes_sent = send(socket_peer, read, strlen(read), 0);
         }
