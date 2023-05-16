@@ -123,6 +123,7 @@ while(1){
                     logado[i]=0;
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
+                    continue;
                 }
             }
         }
