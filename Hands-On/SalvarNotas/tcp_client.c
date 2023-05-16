@@ -19,13 +19,13 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
-    printf("Endereço remoto é: ");
+    /*printf("Endereço remoto é: ");
     char address_buffer[100];
     char service_buffer[100];
     getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen, address_buffer, sizeof(address_buffer),
     service_buffer, sizeof(service_buffer), NI_NUMERICHOST);
 
-    printf("%s %s\n", address_buffer, service_buffer);
+    printf("%s %s\n", address_buffer, service_buffer);*/
 
     //Criando o socket
     SOCKET socket_peer;
@@ -42,12 +42,11 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Conexão falhou. (%d)", GETSOCKETERRNO());
         return 1;
     }
-    printf("\nConectado...Digite uma nota: ");
+    
+
     freeaddrinfo(peer_address);
-
     
-    
-
+    system("echo Pressione enter...");
 
     while(1){
         fd_set reads;
@@ -67,7 +66,7 @@ int main(int argc, char *argv[]){
             int bytes_received = recv(socket_peer, read2, 4096, 0);
         
             if (bytes_received<1){
-                printf("Conexão interrompida pelo peer\n");
+                //printf("Conexão interrompida pelo peer\n");
                 break;
             }
             printf("\n%.*s\n",bytes_received, read2);
@@ -76,13 +75,16 @@ int main(int argc, char *argv[]){
 
         if(FD_ISSET(0, &reads)){
             unsigned char read[4096];
+            for(int j=0;j<4096;j++) read[j]=0;
             if(!fgets(read, 4096, stdin)) break;
+            __fpurge(stdin);
             int bytes_sent = send(socket_peer, read, strlen(read), 0);
+            system("clear");
         }
     }
 
     //Fechando socket
     CLOSESOCKET(socket_peer);
-    printf("\nEncerrado\n");
+    printf("\nEncerrado");
     return 0;
 }

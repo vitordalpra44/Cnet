@@ -1,7 +1,14 @@
 #include "SalvarNotasH.h"
 #include <ctype.h>
-
+#define PASSWORD "senha123\n"
+#define MAXSOCK 10
 int main(){
+
+ int logado[MAXSOCK] = {0};
+
+
+
+
 //Configurando endereço local;
 struct addrinfo hints;
 memset(&hints, 0, sizeof(hints));
@@ -69,28 +76,55 @@ while(1){
                 printf("Nova conexão de %s\n", address_buffer);
             
             }else{
-                char read[1024];
-                int bytes_received= recv(i, read, 1024, 0);
-                if(bytes_received<1){
+                if(logado[i] == 0){
+                    unsigned char read[1024];
+                    for(int j=0;j<1024;j++) read[j]=0;
+                    int bytes_received= recv(i, read, 1024, 0);
+                    if(bytes_received<1){
+                        FD_CLR(i, &master);
+                        CLOSESOCKET(i);
+                        continue;
+                    }
+                    
+                    if(!strcmp(read, PASSWORD)){
+                        logado[i] = 1;
+                        unsigned char mensagem2[] = {"Digite sua anotação: "};
+                        send(i, mensagem2, strlen(mensagem2), 0);
+                    }else{
+                        logado[i] = 0;
+                        unsigned char mensagem2[] = {"Digite a senha: "};
+                        send(i, mensagem2, strlen(mensagem2), 0);
+                    }
+                }else if(logado[i] == 1){
+                    unsigned char read[1024];
+                    for(int j=0;j<1024;j++) read[j]=0;
+                    int bytes_received= recv(i, read, 1024, 0);
+                    if(bytes_received<1){
+                        FD_CLR(i, &master);
+                        CLOSESOCKET(i);
+                        continue;
+                    }
+                    FILE *arquivo;
+                    arquivo = fopen("Notas.txt", "a");
+                    if(arquivo == NULL) {
+                        printf("Erro ao abrir o arquivo!\n");
+                        return 1;
+                    }
+
+                    time_t timer;
+                    time(&timer);
+                    fprintf(arquivo, "Data: %sNota: %s", ctime(&timer), read);
+                    fclose(arquivo);
+                    for(int j=0;j<1024;j++){
+                        read[j]=0;
+                    }
+                    char resp[] = {"\nNota salva com sucesso..."};
+                    send(i, resp, strlen(resp),0);
+                    logado[i]=0;
                     FD_CLR(i, &master);
                     CLOSESOCKET(i);
-                    continue;
                 }
-                FILE *arquivo;
-                arquivo = fopen("Notas.txt", "a");
-                if(arquivo == NULL) {
-                    printf("Erro ao abrir o arquivo!\n");
-                    return 1;
-                }
-                time_t timer;
-	            time(&timer);
-                fprintf(arquivo, "\nData: %sNota: %s", ctime(&timer), read);
-                fclose(arquivo);
-                char resp[] = {"\nNota salva com sucesso...Digite outra: "};
-                send(i, resp, strlen(resp),0);
-
             }
-
         }
 
     }
