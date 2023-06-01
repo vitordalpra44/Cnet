@@ -38,7 +38,7 @@ int socket_r(char *IP, char *port){ //Função robusta que cria um socket para S
     
     // Configurar o endereço IPv4
     address.sin_family = AF_INET;  // Família de endereços IPv4
-    address.sin_port = htons(port);  // Porta
+    address.sin_port = htons(atoi(port));  // Porta
     inet_pton(AF_INET, IP, &(address.sin_addr));  // Endereço IP
 
     // Copiar o endereço IPv4 para a estrutura sockaddr_storage
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
     SOCKET socket_peer = socket_r(argv[1], argv[2]); /*Definindo protocolo SCTP*/
 
     /*Conectando ao servidor*/
-    if(connect(socket_peer, s_loc->ai_addr, s_loc->ai_addrlen)){
+    if(connect(socket_peer, s_loc.ai_addr, s_loc.ai_addrlen)){
         fprintf(stderr, "connect() falhou. (%d)", GETSOCKETERRNO());
         return 1;
     }
