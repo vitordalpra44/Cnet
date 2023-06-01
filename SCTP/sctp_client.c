@@ -31,19 +31,20 @@
 #define GETSOCKETERRNO() (errno)
 
 struct sockaddr_storage s_rem, s_loc;
-
-int socket_r(){ //Função robusta que cria um socket para SCTP e trata erros *Tirada da biblioteca lksctp e adaptada
+struct sockaddr_in address;
+int socket_r(char *IP, char *port){ //Função robusta que cria um socket para SCTP e trata erros *Tirada da biblioteca lksctp e adaptada
 	struct sctp_event_subscribe subscribe;
 	int sk, error;
+    
+    // Configurar o endereço IPv4
+    address.sin_family = AF_INET;  // Família de endereços IPv4
+    address.sin_port = htons(port);  // Porta
+    inet_pton(AF_INET, IP, &(address.sin_addr));  // Endereço IP
+
+    // Copiar o endereço IPv4 para a estrutura sockaddr_storage
+    memcpy(&s_loc, &address, sizeof(struct sockaddr_in));
 	if ((sk = socket(s_loc.ss_family, SOCK_STREAM, IPPROTO_SCTP)) < 0 ) {
-		if (do_exit) {
-			fprintf(stderr, "\n\n\t\t*** socket: failed to create"
-				" socket:  %s ***\n",
-        	       	        strerror(errno));
-			exit(1);
-		} else {
 			return -1;
-		}
 	}
 
 	memset(&subscribe, 0, sizeof(subscribe));
@@ -70,20 +71,8 @@ int main(int argc, char *argv[]){
 
     printf("\nConfigurando o endereço remoto...\n");
 
-    if(getaddrinfo(argv[1], argv[2], &hints, &s_loc)){
-        fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-
-    printf("Endereço remoto é: ");
-    char address_buffer[100];
-    char service_buffer[100];
-    getnameinfo(peer_address->ai_addr, peer_address->ai_addrlen, address_buffer, sizeof(address_buffer),
-    service_buffer, sizeof(service_buffer), NI_NUMERICHOST);
-    printf("%s %s\n", address_buffer, service_buffer);
-
     /*Criando o socket*/
-    SOCKET socket_peer = socket_r(); /*Definindo protocolo SCTP*/
+    SOCKET socket_peer = socket_r(argv[1], argv[2]); /*Definindo protocolo SCTP*/
 
     /*Conectando ao servidor*/
     if(connect(socket_peer, s_loc->ai_addr, s_loc->ai_addrlen)){
