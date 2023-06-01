@@ -30,6 +30,35 @@
 #define SOCKET int
 #define GETSOCKETERRNO() (errno)
 
+struct sockaddr_storage s_rem, s_loc;
+
+int socket_r(){ //Função robusta que cria um socket para SCTP e trata erros *Tirada da biblioteca lksctp e adaptada
+	struct sctp_event_subscribe subscribe;
+	int sk, error;
+	if ((sk = socket(s_loc.ss_family, SOCK_STREAM, IPPROTO_SCTP)) < 0 ) {
+		if (do_exit) {
+			fprintf(stderr, "\n\n\t\t*** socket: failed to create"
+				" socket:  %s ***\n",
+        	       	        strerror(errno));
+			exit(1);
+		} else {
+			return -1;
+		}
+	}
+
+	memset(&subscribe, 0, sizeof(subscribe));
+	subscribe.sctp_data_io_event = 1;
+	subscribe.sctp_association_event = 1;
+	error = setsockopt(sk, SOL_SCTP, SCTP_EVENTS, (char *)&subscribe,
+			   sizeof(subscribe));
+	if (error) {
+		fprintf(stderr, "SCTP_EVENTS: error: %d\n", error);
+		exit(1);
+	}
+	return sk;
+
+}
+
 int main(int argc, char *argv[]){
 
 
@@ -40,12 +69,8 @@ int main(int argc, char *argv[]){
     }
 
     printf("\nConfigurando o endereço remoto...\n");
-    struct addrinfo hints;
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_socktype = SOCK_STREAM;
-    struct addrinfo *peer_address;
-    if(getaddrinfo(argv[1], argv[2], &hints, &peer_address)){
+    if(getaddrinfo(argv[1], argv[2], &hints, &s_loc)){
         fprintf(stderr, "getaddrinfo() failed. (%d)\n", GETSOCKETERRNO());
         return 1;
     }
@@ -58,18 +83,10 @@ int main(int argc, char *argv[]){
     printf("%s %s\n", address_buffer, service_buffer);
 
     /*Criando o socket*/
-    SOCKET socket_peer;
-    socket_peer = socket(peer_address->ai_family,
-                        peer_address->ai_socktype, IPPROTO_SCTP); /*Definindo protocolo SCTP*/
-
-    if(!ISVALIDSOCKET(socket_peer)){
-        fprintf(stderr,"socket() falhou. (%d)\n", GETSOCKETERRNO());
-        return 1;
-    }
-
+    SOCKET socket_peer = socket_r(); /*Definindo protocolo SCTP*/
 
     /*Conectando ao servidor*/
-    if(connect(socket_peer, peer_address->ai_addr, peer_address->ai_addrlen)){
+    if(connect(socket_peer, s_loc->ai_addr, s_loc->ai_addrlen)){
         fprintf(stderr, "connect() falhou. (%d)", GETSOCKETERRNO());
         return 1;
     }
