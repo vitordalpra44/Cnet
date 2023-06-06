@@ -18,112 +18,144 @@
 #include <errno.h>
 
 
-
 /*Todos os defines necessários*/
-#define MYPORT "8080"
-#define MAXCON 10 /*número máximo de conexões que podem ser colocadas em espera enquanto o processo está tratando uma conexão ativa. listen()*/
+#define MAXCON 10 //número máximo de conexões que podem ser colocadas em espera enquanto o processo está tratando uma conexão ativa. listen()
 #define MAXBUFFER 1024
-#define SOCKET int
-
-#define ISVALIDSOCKET(s) ((s) >=0)
+#define TIMEOUTSEC 0
+#define TIMEOUTUSEC 100000
 #define CLOSESOCKET(s) close(s)
+#define ISVALIDSOCKET(s) ((s) >=0)
 #define SOCKET int
-#define GETSOCKETERRNO() (errno)
+#define MYPORT 8080
+#define MYIP "192.168.1.20"
+
+
+/*Função que cria um socket para SCTP, IPV4 em modo de fluxo (STREAM) e trata erro*/
+SOCKET socket_sctp(){
+	SOCKET socket_ret;
+    socket_ret = socket(AF_INET, SOCK_STREAM, IPPROTO_SCTP);
+    if(socket_ret== -1){
+        printf("\nsocket() falhou");
+        exit(-1);
+    }
+    return socket_ret;
+}
+
+
+/*Função que faz o link entre o socket e o endereço IP:porta do servidor*/
+void bind_sctp(SOCKET socket_listen){
+    struct sockaddr_in local_address;
+    memset(&local_address, 0, sizeof(local_address));
+    local_address.sin_family = AF_INET;
+    local_address.sin_addr.s_addr = htonl(INADDR_ANY);
+    local_address.sin_port = htons(MYPORT);
+    if(bind(socket_listen, (struct sockaddr *) &local_address, sizeof(local_address)) <0){
+        printf("\nbind() falhou");
+        exit(-1);
+    }
+}
+
+
+/*Função que aceita novas conexões e imprime o endereço na tela*/
+int accept_sctp(SOCKET socket_listen){
+    struct sockaddr_in client_address;
+    socklen_t client_len = sizeof(client_address);
+    memset(&client_address, 0, sizeof(client_address));
+    SOCKET socket_client = accept(socket_listen, (struct sockaddr *) &client_address, &client_len);
+    if(!ISVALIDSOCKET(socket_client)){
+        printf("\naccept() falhou");
+        return 1;                   
+    }
+    char address_buffer[100];
+    getnameinfo((struct sockaddr *) &client_address, (unsigned int) sizeof(client_address), address_buffer, sizeof(address_buffer), 0, 0, NI_NUMERICHOST);
+    printf("\nNova conexão de %s\n", address_buffer);
+    return socket_client;  
+}
+
+
+/*Função que recebe dados do servidor e retorna o número de bytes recebidos*/
+int recv_sctp(SOCKET socket_listen, char *msg){
+    int bytes_received = recv(socket_listen, msg, MAXBUFFER, 0);
+    return bytes_received;
+}
+
+
+/*Função que envia dados ao servidor e retorna o número de bytes enviados*/
+int send_sctp(SOCKET socket_listen){
+    char msg[MAXBUFFER];
+    printf("\nDigite a mensagem: ");
+    if(!fgets(msg, MAXBUFFER, stdin)) return -2;
+    int bytes_sent = send(socket_listen, msg, strlen(msg), 0);
+    return bytes_sent;
+}
+
 
 int main(){
 
-/*Configurando endereço local*/
-struct addrinfo hints;
-memset(&hints, 0, sizeof(hints));
-hints.ai_family = AF_INET;
-hints.ai_socktype = SOCK_STREAM;
-hints.ai_flags = AI_PASSIVE;
 
-struct addrinfo *bind_address;
-if(getaddrinfo(0, MYPORT, &hints, &bind_address)) return 1; /*se getaddrinfo retornar algo diferente de 0 a operação deu errado*/
+    /*Criando socket*/
+    SOCKET socket_listen = socket_sctp();
 
-/*Criando socket*/
-SOCKET socket_listen;
-socket_listen = socket(bind_address->ai_family,
-                        bind_address->ai_socktype, IPPROTO_SCTP);/*Definindo protocolo SCTP*/
-                        
-if(!ISVALIDSOCKET(socket_listen)){ /*testando se a função socket() funcionou*/
-    fprintf(stderr, "socket() falhou (%d)", GETSOCKETERRNO());
-    return 1;
-}
-
-/*Vinculando o socket com IP e porta definidos*/
-if(bind(socket_listen, bind_address->ai_addr, bind_address->ai_addrlen)){
-    fprintf(stderr, "bind() falhou (%d)", GETSOCKETERRNO());
-    return 1;
-}
-
-freeaddrinfo(bind_address); /*Após o bind ter sido efetuado podemos desalocar*/
-
-/*Esperando por conexão no protocolo SCTP*/
-if(listen(socket_listen, MAXCON)<0){ 
-    fprintf(stderr, "listen() falhou (%d)", GETSOCKETERRNO());
-    return 1;
-}
-
-/*Conjunto dos sockets*/
-fd_set master;
-FD_ZERO(&master);
-FD_SET(socket_listen, &master);
-SOCKET max_socket = socket_listen;
+    /*Vinculando o socket com IP e porta definidos*/
+    bind_sctp(socket_listen);
 
 
-printf("Esperando por conexões...\n");
-while(1){
-    fd_set reads;
-    reads = master;
-    if(select(max_socket+1, &reads, 0, 0, 0)<0){ /*Select() serve como uma multiplexação de sockets*/
-        fprintf(stderr, "select() falhou (%d)", GETSOCKETERRNO());
+    /*Esperando por conexão no protocolo SCTP*/
+    if(listen(socket_listen, MAXCON)<0){ 
+        printf("\nlisten() falhou");
         return 1;
     }
-    
-    SOCKET i;
-    for(i=1; i<=max_socket; ++i){
-        if(FD_ISSET(i, &reads)){
-            if( i== socket_listen){
-                struct sockaddr_storage client_address;
-                socklen_t client_len = sizeof(client_address);
-                SOCKET socket_client = accept(socket_listen, (struct sockaddr*) &client_address, &client_len);
-                if(!ISVALIDSOCKET(socket_client)){
-                    fprintf(stderr, "accept() falhou (%d)", GETSOCKETERRNO());
-                    return 1;                   
-                }
-                FD_SET(socket_client, &master);
-                if(socket_client>max_socket)
-                    max_socket= socket_client;
-                
-                char address_buffer[100];
-                getnameinfo((struct sockaddr*) &client_address, client_len, address_buffer, sizeof(address_buffer), 0, 0, NI_NUMERICHOST);
-                printf("Nova conexão de %s\n", address_buffer);
 
-            
-            }else{
-                char read[MAXBUFFER];       
-                int bytes_received= recv(i, read, MAXBUFFER, 0);
-                if(bytes_received<1){
-                    FD_CLR(i, &master);
-                    CLOSESOCKET(i);
-                    continue;
+
+    /*Conjunto dos sockets*/
+    fd_set master;
+    FD_ZERO(&master);//Limpando conjunto de sockets
+    FD_SET(socket_listen, &master);
+    SOCKET max_socket = socket_listen;//Como teremos vários sockets temos sempre que saber o valor do maior para a função select()
+
+
+    printf("\nEsperando por conexões...\n");
+
+    while(1){
+        fd_set reads;
+        reads = master;
+        if(select(max_socket+1, &reads, 0, 0, 0)<0){ /*Select() serve como uma multiplexação de sockets*/
+            printf("\nselect() falhou");
+            return 1;
+        }
+fflush(stdout);
+        SOCKET i;
+        for(i=1; i<=max_socket; ++i){
+            if(FD_ISSET(i, &reads)){
+                if( i == socket_listen){
+                    SOCKET socket_client = accept_sctp(socket_listen); /*Aceitando novas conexões*/
+                    FD_SET(socket_client, &master);
+                    if(socket_client>max_socket) /*Atualizando o valor do max_socket*/
+                        max_socket= socket_client;
+                }else{
+                    char msg[MAXBUFFER];       
+                    int bytes_received= recv_sctp(i, msg);
+                    if(bytes_received<1){
+                        FD_CLR(i, &master);
+                        CLOSESOCKET(i);
+                        continue;
+                    }
+                    printf("\nRecebido: %s\n", msg);
+
+                    /*Processa informação....*/
+                    /*Envia o resultado...*/
                 }
-                printf("Recebido: %s", read);
-                /*Processa informação....*/
-                /*Envia o resultado...*/
+
             }
 
         }
-
     }
 
-}
+    /*Fechando o socket*/
+    CLOSESOCKET(socket_listen);
+    printf("Encerrado...\n");
 
-printf("Fechando o socket...\n");
-CLOSESOCKET(socket_listen);
-printf("Encerrado...\n");
+
     return 0;
 }
 
