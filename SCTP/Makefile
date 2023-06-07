@@ -1,3 +1,3 @@
 all:
-	@gcc sctp_client.c -o sctp_client
-	@gcc sctp_server.c -o sctp_server
+	@gcc sctp_client.c -lsctp -o sctp_client
+	@gcc sctp_server.c -lsctp -o sctp_server
