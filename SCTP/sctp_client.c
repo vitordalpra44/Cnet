@@ -69,9 +69,22 @@ int recv_sctp(SOCKET socket_peer, char *msg){
 /*Função que envia dados ao servidor e retorna o número de bytes enviados*/
 int send_sctp(SOCKET socket_peer){
     char msg[MAXBUFFER];
-    printf("\nDigite a mensagem: ");
+    //printf("\nDigite a mensagem: ");
     if(!fgets(msg, MAXBUFFER, stdin)) return -2;
-    int bytes_sent = send(socket_peer, msg, strlen(msg), 0);
+    /*int bytes_sent = send(socket_peer, msg, strlen(msg), 0);
+    return bytes_sent;*/
+
+    //Write-Replace-Warning Request
+    const char* hex_string = "0000007a000006000500020003000b00027000000a000200050007000203e7000340010f0010405600530131d98c566b341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d16805";
+    size_t hex_len = strlen(hex_string);
+    size_t byte_len = hex_len / 2;
+    unsigned char* bytes = malloc(byte_len);
+    memset(bytes, 0, byte_len);
+    for (size_t i = 0; i < byte_len; i++) {
+        sscanf(hex_string + (2 * i), "%2hhx", &bytes[i]);
+    }
+    int bytes_sent = send(socket_peer, bytes, byte_len, 0);
+    free(bytes);
     return bytes_sent;
 }
 
@@ -96,9 +109,9 @@ int main(int argc, char *argv[]){
     /*Conectando ao servidor*/
     if(connect_sctp(argv[1], argv[2], socket_peer)) return -1;
 
-
-    printf("Teste");
+    printf("\nEnter para enviar Write-Replace-Warning Request: ");
     fflush(stdout);
+
     while(1){
 
 
@@ -121,7 +134,7 @@ int main(int argc, char *argv[]){
             char msg[MAXBUFFER];
             int bytes_received = recv_sctp(socket_peer, msg);
             if (bytes_received<1) break;
-            printf("\nRecebido: %.*s\n",bytes_received, msg);
+            //printf("\nRecebido: %.*s\n",bytes_received, msg);
         }
 
 
