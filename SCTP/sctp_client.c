@@ -87,7 +87,18 @@ int send_sctp(SOCKET socket_peer){
     free(bytes);
     return bytes_sent;
 }
+char * lerArquivo(){
+    FILE *file;
+    file = fopen("/home/vitor/Desktop/Teste.per", "rb");
+    if(!file){
+        exit(1);
+    }
+    fseek(file, 0, SEEK_END);
+    int tamanho = ftell(file);
+    char *mensagem = (char*) calloc(sizeof(char)*tamanho);
+    
 
+}
 
 int main(int argc, char *argv[]){
 
