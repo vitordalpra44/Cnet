@@ -65,6 +65,25 @@ int recv_sctp(SOCKET socket_peer, char *msg){
 
 }
 
+/*Função para pegar os bits de um arquivo .per do asn1*/
+int  lerArquivo(char *mensagem, char *path){
+    FILE *file;
+    file = fopen(path, "rb");
+    if(!file){
+        printf("\nerro ao abrir arquivo\n");
+        exit(1);
+    }
+
+    fseek(file, 0, SEEK_END);
+    int tamanho = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    mensagem = (char*) calloc(tamanho,sizeof(char));
+    int resultado = fread(mensagem, sizeof(char), tamanho, file);
+    if(resultado==tamanho) return tamanho;
+    exit(1);
+//Lembrar de desalocar a mensagem...
+}
 
 /*Função que envia dados ao servidor e retorna o número de bytes enviados*/
 int send_sctp(SOCKET socket_peer){
@@ -89,24 +108,6 @@ int send_sctp(SOCKET socket_peer){
     free(mensagem);
    // free(bytes);
     return bytes_sent;
-}
-int * lerArquivo(char *mensagem, char *path){
-    FILE *file;
-    file = fopen(path, "rb");
-    if(!file){
-        printf("\nerro ao abrir arquivo\n");
-        exit(1);
-    }
-
-    fseek(file, 0, SEEK_END);
-    int tamanho = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    mensagem = (char*) calloc(sizeof(char)*tamanho);
-    int resultado = fread(mensagem, sizeof(char), tamanho, file);
-    if(resultado==tamanho) return tamanho;
-    exit(1);
-//Lembrar de desalocar a mensagem...
 }
 
 int main(int argc, char *argv[]){
