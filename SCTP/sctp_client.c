@@ -74,7 +74,7 @@ int send_sctp(SOCKET socket_peer){
     /*int bytes_sent = send(socket_peer, msg, strlen(msg), 0);
     return bytes_sent;*/
 
-    //Write-Replace-Warning Request
+    /*//Write-Replace-Warning Request
     const char* hex_string = "0000007a000006000500020003000b00027000000a000200050007000203e7000340010f0010405600530131d98c566b341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d168341a8d46a3d16805";
     size_t hex_len = strlen(hex_string);
     size_t byte_len = hex_len / 2;
@@ -82,22 +82,31 @@ int send_sctp(SOCKET socket_peer){
     memset(bytes, 0, byte_len);
     for (size_t i = 0; i < byte_len; i++) {
         sscanf(hex_string + (2 * i), "%2hhx", &bytes[i]);
-    }
-    int bytes_sent = send(socket_peer, bytes, byte_len, 0);
-    free(bytes);
+    }*/
+    char *mensagem;
+    int tamanho = lerArquivo(mensagem, "/home/vitor/Desktop/Teste.per");
+    int bytes_sent = send(socket_peer, mensagem, tamanho, 0);
+    free(mensagem);
+   // free(bytes);
     return bytes_sent;
 }
-char * lerArquivo(){
+int * lerArquivo(char *mensagem, char *path){
     FILE *file;
-    file = fopen("/home/vitor/Desktop/Teste.per", "rb");
+    file = fopen(path, "rb");
     if(!file){
+        printf("\nerro ao abrir arquivo\n");
         exit(1);
     }
+
     fseek(file, 0, SEEK_END);
     int tamanho = ftell(file);
-    char *mensagem = (char*) calloc(sizeof(char)*tamanho);
-    
+    fseek(file, 0, SEEK_SET);
 
+    mensagem = (char*) calloc(sizeof(char)*tamanho);
+    int resultado = fread(mensagem, sizeof(char), tamanho, file);
+    if(resultado==tamanho) return tamanho;
+    exit(1);
+//Lembrar de desalocar a mensagem...
 }
 
 int main(int argc, char *argv[]){
