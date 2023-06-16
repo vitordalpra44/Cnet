@@ -141,7 +141,7 @@ fflush(stdout);
                         continue;
                     }
                     printf("\nRecebido: %s\n", msg);
-
+                    fflush(stdout);
                     /*Processa informação....*/
                     /*Envia o resultado...*/
                 }

@@ -60,6 +60,7 @@ int recv_sctp(SOCKET socket_peer, char *msg){
     int bytes_received = recv(socket_peer, msg, MAXBUFFER, 0);
     if (bytes_received<1){
         printf("\nconexão interrompida pelo peer\n");
+        fflush(stdout);
         return -1;
     }
 
@@ -70,6 +71,7 @@ FILE * abrirArquivo(const char *path)
     if (!(fv = fopen(path, "rb"))) {
 	printf("Failed to open the '%s' file. Restart the sample program using the file "
 		"location as the input parameter.\n", path);
+        fflush(stdout);
         exit(1);
     }
     return fv;
@@ -80,6 +82,7 @@ FILE * abrirArquivoHex(const char *path)
     if (!(fv = fopen(path, "r"))) {
 	printf("Failed to open the '%s' file. Restart the sample program using the file "
 		"location as the input parameter.\n", path);
+        fflush(stdout);
         exit(1);
     }
     return fv;
@@ -102,21 +105,23 @@ long  lerArquivo(char *mensagem, const char *path){
 //Lembrar de desalocar a mensagem...
 }
 /*Função para pegar os bits de um arquivo em hexadecimal do asn1*/
-long  lerArquivoHex(char *mensagem, const char *path){
+long  lerArquivoHex(unsigned char **mensagem, const char *path){
     FILE *file = abrirArquivoHex(path);
 
     fseek(file, 0, SEEK_END);
     long tamanho = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char *mensagemHex = (char*) calloc(tamanho,sizeof(char));
-    int resultado = fread(mensagemHex, sizeof(char), tamanho, file);
+    unsigned char *mensagemHex = (unsigned char*) calloc(tamanho,sizeof(unsigned char));
+    long resultado = fread(mensagemHex, sizeof(char), tamanho, file);
     if(resultado == tamanho){
         size_t byte_len = tamanho / 2;
-        mensagem = malloc(byte_len);
-        memset(mensagem, 0, byte_len);
+        *mensagem = (unsigned char*) malloc(byte_len);
+        if(*mensagem == NULL)
+            exit(1);
+        memset(*mensagem, 0, byte_len);
         for (size_t i = 0; i < byte_len; i++) {
-            sscanf(mensagemHex + (2 * i), "%2hhx", &mensagem[i]);
+            sscanf(mensagemHex + (2 * i), "%2hhx", *mensagem+i);
         }
         free(mensagemHex);
     }
@@ -139,13 +144,12 @@ int send_sctp(SOCKET socket_peer){
 
 
     if(!fgets(msg, MAXBUFFER, stdin)) return -2;
-    char *mensagem = NULL;
-    int tamanho = lerArquivoHex(mensagem, "/home/vitor/Desktop/Hugtak/Cnet/SCTP/Teste.txt");
+    unsigned char *mensagem = NULL;
+    int tamanho = lerArquivoHex(&mensagem, "/home/vitor/Desktop/Hugtak/Cnet/SCTP/Teste.txt");
     if(mensagem){
     bytes_sent = send(socket_peer, mensagem, tamanho, 0);
     free(mensagem);
     }
-
 
     return bytes_sent;
 }
