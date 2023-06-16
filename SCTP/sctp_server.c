@@ -26,8 +26,8 @@
 #define CLOSESOCKET(s) close(s)
 #define ISVALIDSOCKET(s) ((s) >=0)
 #define SOCKET int
-#define MYPORT 8080
-#define MYIP "192.168.1.20"
+#define MYPORT 29168
+
 
 
 /*Função que cria um socket para SCTP, IPV4 em modo de fluxo (STREAM) e trata erro*/
