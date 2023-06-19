@@ -88,17 +88,17 @@ FILE * abrirArquivoHex(const char *path)
     return fv;
 }
 /*Função para pegar os bits de um arquivo .per do asn1*/
-long  lerArquivo(char *mensagem, const char *path){
+long  lerArquivo(unsigned char **mensagem, const char *path){
     FILE *file = abrirArquivo(path);
 
     fseek(file, 0, SEEK_END);
     long tamanho = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    mensagem = (char*) calloc(tamanho,sizeof(char));
-    int resultado = fread(mensagem, sizeof(char), tamanho, file);
+    *mensagem = (char*) calloc(tamanho,sizeof(char));
+    int resultado = fread(*mensagem, sizeof(char), tamanho, file);
     if(file)
-    fclose(file);
+        fclose(file);
 
     if(resultado==tamanho) return tamanho;
     exit(1);
