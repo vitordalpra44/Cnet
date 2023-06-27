@@ -65,6 +65,7 @@ int recv_sctp(SOCKET socket_peer, char *msg){
     }
 
 }
+/*Abrir arquivo*/
 FILE * abrirArquivo(const char *path)
 {
     FILE *fv;
